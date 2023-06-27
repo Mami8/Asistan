@@ -1,7 +1,9 @@
 from qbittorrent import client
 import argparse
-target_torrent = ""
+import telegram_bot_handler as th
+
 with open("D:\\Code\\Piton\\torrent.txt") as f:
+    global target_torrent
     target_torrent = f.read()
 
 
@@ -56,7 +58,6 @@ def torrent_listele(istenen=""):
 def torrent_devam_et():
     torrent = ""
     for i in torrents:
-
         if i["name"] == target_torrent:
             torrent = i["hash"]
             break
@@ -77,6 +78,21 @@ def torrent_durdur(torrent_listesi=[], hepsi_mi=True):
         qb.pause_multiple(torrent_hashs)
 
 
+def torrent_bitti_mi():
+    for torrent in torrents:
+        if torrent["name"] == target_torrent:
+            if not torrent["amount_left"]:
+                th.send_message(f"{target_torrent} bitti!")
+            else:
+                total_size = torrent["total_size"]
+                remaining_size = torrent["amount_left"]
+                downloaded_size = total_size - remaining_size
+                progress = (downloaded_size / total_size) * 100
+                th.send_message(
+                    f"{target_torrent} için {boyut_formatla(torrent['amount_left'])} kaldı\nİlerleme: {progress:.2f}%"
+                )
+
+
 def main():
     parser = argparse.ArgumentParser(description="qBittorrent Automation Script")
     parser.add_argument(
@@ -86,6 +102,9 @@ def main():
         help="Resume the torrent that is in the txt file. You have to manually edit it to change torrent starting.",
     )
     parser.add_argument("-p", "--pause", action="store_true", help="Pause all torrents")
+    parser.add_argument(
+        "-S", "--status", action="store_true", help="Hedef torrent bitmiş mi?"
+    )
 
     args = parser.parse_args()
 
@@ -94,9 +113,10 @@ def main():
 
     if args.pause:
         torrent_durdur()
+        
+    if args.status:
+        torrent_bitti_mi()
 
 
 if __name__ == "__main__":
     main()
-
-torrent_devam_et()
